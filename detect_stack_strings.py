@@ -63,19 +63,14 @@ def emulate():
         print("Sorry, unsupported architecture.")
         return
     bits = currentProgram.getLanguage().getLanguageDescription().getSize()
-    if bits == 32:
-        emu = Uc(UC_ARCH_X86, UC_MODE_32)
-    else:
-        emu = Uc(UC_ARCH_X86, UC_MODE_64)
+    emu = Uc(UC_ARCH_X86, UC_MODE_32 if bits==32 else UC_MODE_64)
     min_addr = currentSelection.getMinAddress().getOffset()
     max_addr = currentSelection.getMaxAddress()
     # print(f'Selection from 0x{min_addr:x} to 0x{max_addr.getOffset():x}')
     last_instruction = getInstructionContaining(max_addr)
     max_addr = last_instruction.getMaxAddress().getOffset()
     last_instruction_addr = last_instruction.getMinAddress().getOffset()
-    print(
-        f"Emulating from 0x{min_addr:x} to 0x{last_instruction_addr:x} (code range 0x{min_addr:x}-0x{max_addr:x})"
-    )
+    print(f"Emulating from 0x{min_addr:x} to 0x{last_instruction_addr:x} (code range 0x{min_addr:x}-0x{max_addr:x})")
     code = bytes(b & 0xFF for b in getBytes(toAddr(min_addr), max_addr - min_addr + 1))
     CODE_ADDR = min_addr & ~4095
     CODE_SIZE = (max_addr - CODE_ADDR + 4096) & ~4095
@@ -84,31 +79,22 @@ def emulate():
     emu.mem_map(CODE_ADDR, CODE_SIZE, UC_PROT_EXEC)
     emu.mem_write(min_addr, code)
     emu.mem_map(STACK_ADDR, STACK_SIZE, UC_PROT_READ | UC_PROT_WRITE)
-    if bits == 32:
-        emu.reg_write(UC_X86_REG_ESP, STACK_ADDR + STACK_SIZE)
-        emu.reg_write(UC_X86_REG_EBP, STACK_ADDR + STACK_SIZE // 2)
-    else:
-        emu.reg_write(UC_X86_REG_RSP, STACK_ADDR + STACK_SIZE)
-        emu.reg_write(UC_X86_REG_RBP, STACK_ADDR + STACK_SIZE // 2)
+    emu.reg_write(UC_X86_REG_ESP if bits==32 else UC_X86_REG_RSP, STACK_ADDR + STACK_SIZE)
+    emu.reg_write(UC_X86_REG_EBP if bits==32 else UC_X86_REG_EBP, STACK_ADDR + STACK_SIZE // 2)
     all_writes = {}
 
     def hook_mem_write(emu, access, address, size, value, user_data):
-        assert access == UC_MEM_WRITE
-        # print(">>> Memory is being WRITE at 0x%x, data size = %u, data value = 0x%x" % (address, size, value))
-        all_writes[address] = emu.reg_read(
-            UC_X86_REG_EIP if bits == 32 else UC_X86_REG_RIP
-        )
+        all_writes[address] = emu.reg_read(UC_X86_REG_EIP if bits == 32 else UC_X86_REG_RIP)
 
     emu.hook_add(UC_HOOK_MEM_WRITE, hook_mem_write)
     emu.emu_start(min_addr, last_instruction_addr)
-    found = False
+    n_found = 0
     for s, offset in all_strings(emu.mem_read(STACK_ADDR, STACK_SIZE), 3):
-        found = True
+        n_found += 1
         inst_addr = all_writes[offset + STACK_ADDR]
         print(f"'{s}' written by instruction at 0x{inst_addr:x}")
         setPreComment(toAddr(inst_addr), s)
-    if not found:
-        print('No strings found.')
+    print(f'{n_found} string(s) found.')
 
 
 if currentSelection is not None:
