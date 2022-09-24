@@ -80,7 +80,7 @@ def emulate():
     emu.mem_write(min_addr, code)
     emu.mem_map(STACK_ADDR, STACK_SIZE, UC_PROT_READ | UC_PROT_WRITE)
     emu.reg_write(UC_X86_REG_ESP if bits==32 else UC_X86_REG_RSP, STACK_ADDR + STACK_SIZE)
-    emu.reg_write(UC_X86_REG_EBP if bits==32 else UC_X86_REG_EBP, STACK_ADDR + STACK_SIZE // 2)
+    emu.reg_write(UC_X86_REG_EBP if bits==32 else UC_X86_REG_RBP, STACK_ADDR + STACK_SIZE // 2)
     all_writes = {}
 
     def hook_mem_write(emu, access, address, size, value, user_data):
