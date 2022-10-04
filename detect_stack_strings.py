@@ -91,9 +91,12 @@ def emulate():
     n_found = 0
     for s, offset in all_strings(emu.mem_read(STACK_ADDR, STACK_SIZE), 3):
         n_found += 1
-        inst_addr = all_writes[offset + STACK_ADDR]
-        print(f"'{s}' written by instruction at 0x{inst_addr:x}")
-        setPreComment(toAddr(inst_addr), s)
+        inst_addr = all_writes.get(offset + STACK_ADDR, None)
+        if inst_addr:
+            print(f"'{s}' written by instruction at 0x{inst_addr:x}")
+            setPreComment(toAddr(inst_addr), s)
+        else:
+            print(f"'{s}' written by instruction ???")
     print(f'{n_found} string(s) found.')
 
 
