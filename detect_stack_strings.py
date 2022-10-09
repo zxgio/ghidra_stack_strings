@@ -17,8 +17,8 @@ from unicorn import (
     UC_PROT_READ,
     UC_PROT_WRITE,
     UC_PROT_EXEC,
-    UC_MEM_WRITE,
     UC_HOOK_MEM_WRITE,
+    UC_HOOK_CODE
 )
 from unicorn.x86_const import (
     UC_X86_REG_ESP,
@@ -86,8 +86,12 @@ def emulate():
     def hook_mem_write(emu, access, address, size, value, user_data):
         all_writes[address] = emu.reg_read(UC_X86_REG_EIP if bits == 32 else UC_X86_REG_RIP)
 
+    # def hook_code(emu, address, size, user_data):
+    #     print(f'Instruction at 0x{address:x}, size = {size}')
+
     emu.hook_add(UC_HOOK_MEM_WRITE, hook_mem_write)
-    emu.emu_start(min_addr, last_instruction_addr)
+    # emu.hook_add(UC_HOOK_CODE, hook_code)
+    emu.emu_start(min_addr, last_instruction_addr + last_instruction.getLength())
     n_found = 0
     for s, offset in all_strings(emu.mem_read(STACK_ADDR, STACK_SIZE), 3):
         n_found += 1
