@@ -58,14 +58,14 @@ def all_strings(buf, n=4):
 
 
 def emulate():
-    proc = currentProgram.getLanguage().getProcessor().toString()
+    proc = currentProgram().getLanguage().getProcessor().toString()
     if proc != "x86":
         print("Sorry, unsupported architecture.")
         return
-    bits = currentProgram.getLanguage().getLanguageDescription().getSize()
+    bits = currentProgram().getLanguage().getLanguageDescription().getSize()
     emu = Uc(UC_ARCH_X86, UC_MODE_32 if bits==32 else UC_MODE_64)
-    min_addr = currentSelection.getMinAddress().getOffset()
-    max_addr = currentSelection.getMaxAddress()
+    min_addr = currentSelection().getMinAddress().getOffset()
+    max_addr = currentSelection().getMaxAddress()
     # print(f'Selection from 0x{min_addr:x} to 0x{max_addr.getOffset():x}')
     last_instruction = getInstructionContaining(max_addr)
     max_addr = last_instruction.getMaxAddress().getOffset()
