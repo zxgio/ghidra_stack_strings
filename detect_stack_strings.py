@@ -104,7 +104,7 @@ def emulate():
     print(f'{n_found} string(s) found.')
 
 
-if currentSelection is not None:
+if currentSelection() is not None:
     emulate()
 else:
     print("Please select the instructions to emulate, before running this script.")
