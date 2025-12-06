@@ -2,9 +2,7 @@
 # The script is written in Python 3, so it needs Ghidrathon.
 # @author zxgio
 # @category Emulation
-# @keybinding
-# @menupath
-# @toolbar
+# @runtime pyghidra
 
 import re
 from collections import namedtuple
@@ -57,15 +55,15 @@ def all_strings(buf, n=4):
     return list(chain(ascii_strings(buf, n), unicode_strings(buf, n)))
 
 
-def emulate():
-    proc = currentProgram().getLanguage().getProcessor().toString()
+def emulate(selection):
+    proc = currentProgram.getLanguage().getProcessor().toString()
     if proc != "x86":
         print("Sorry, unsupported architecture.")
         return
-    bits = currentProgram().getLanguage().getLanguageDescription().getSize()
+    bits = currentProgram.getLanguage().getLanguageDescription().getSize()
     emu = Uc(UC_ARCH_X86, UC_MODE_32 if bits==32 else UC_MODE_64)
-    min_addr = currentSelection().getMinAddress().getOffset()
-    max_addr = currentSelection().getMaxAddress()
+    min_addr = selection.getMinAddress().getOffset()
+    max_addr = selection.getMaxAddress()
     # print(f'Selection from 0x{min_addr:x} to 0x{max_addr.getOffset():x}')
     last_instruction = getInstructionContaining(max_addr)
     max_addr = last_instruction.getMaxAddress().getOffset()
@@ -104,7 +102,8 @@ def emulate():
     print(f'{n_found} string(s) found.')
 
 
-if currentSelection() is not None:
-    emulate()
+selection = currentSelection
+if selection is not None:
+    emulate(selection)
 else:
     print("Please select the instructions to emulate, before running this script.")
